@@ -2,27 +2,26 @@ NOTE: please fill in the first section with information about your game.
 
 # *Game Title*
 
-*Game Title* is *Your Name*'s implementation of [*Design Document*](http://graphics.cs.cmu.edu/courses/15-466-f17/game2-designs/put-real-link-here) for game2 in 15-466-f17.
+Robot Fun Police [*Design Document*](http://graphics.cs.cmu.edu/courses/15-466-f17/game2-designs/jmccann/) for game2 in 15-466-f17.
 
-*Include a Screenshot Here*
-
-## Build Notes
-
-*Include any special notes or steps required to build your game here. If there are no special notes, delete this section.*
+![Screenshot](robot_police.png)
 
 ## Asset Pipeline
 
-*Briefly describe the asset pipeline for this game. What sorts of source files are used? How are they processed? How are they loaded?*
+I used the export-meshes.py in the models folder that generates the scene.blob and meshes.blob files that are loaded into the game.
 
 ## Architecture
 
-*Provide a brief introduction to how you implemented the design. Talk about the basic structure of your code.*
+I started by exporting the meshes from blender and then went on to loading them into the scene. I followed a parenting logic in the code. The sub objects in the crane are parented to the lower links. I assigned 4 axes variables, one to each of the links and on key press, used glm::angleAxis to rotate each axis with a fixed speed. Since the top links of the crane are parented to bottom ones, it takes care of moving them along with it.
+
+I used standard sin functions to move the baloons up and down the scene. 
 
 ## Reflection
 
-*Reflect on the assignment. What was difficult? What worked well? If you were doing it again, what would you change?*
+Since this was my first time working with open gl in a 3d environment and blender, I struggled a bit on this assignment. It took me a while to understand the scene.cpp files and how mvp matrix works, the scene heirarchy and working with quarternions. I was able to get the rotation and balloon motion working well within the scene with angleAxis and sine/cosine functions. 
 
-*Reflect on the design document. What was clear and what was ambiguous? How did you resolve the ambiguities?*
+However I got stuck with implementing the collisions for popping the balloon. I initially tried to code a hack by calculating the distance between the balloon and the needle. However, the transform.position property of the needle never changed. I realised late that I needed to use the localPosition of the needle to compute the transforms.
+ 
 
 
 # About Base2

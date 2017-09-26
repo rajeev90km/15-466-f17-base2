@@ -13,6 +13,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <fstream>
+#include <unordered_map>
 
 static GLuint compile_shader(GLenum type, std::string const &source);
 static GLuint link_program(GLuint vertex_shader, GLuint fragment_shader);
@@ -23,6 +24,20 @@ int main(int argc, char **argv) {
 		std::string title = "Game2: Scene";
 		glm::uvec2 size = glm::uvec2(640, 480);
 	} config;
+    
+    
+    bool isZPressed = false;
+    bool isXPressed = false;
+    bool isAPressed = false;
+    bool isSPressed = false;
+    bool isCommaPressed = false;
+    bool isColnPressed = false;
+    bool isPeriodPressed = false;
+    bool isSlashPressed = false;
+    
+    Scene::Object* Balloon1;
+    Scene::Object* Balloon2;
+    Scene::Object* Balloon3;
 
 	//------------  initialization ------------
 
@@ -173,7 +188,8 @@ int main(int argc, char **argv) {
 		object.program_itmv = program_itmv;
 		return object;
 	};
-
+    
+	std::vector< Scene::Object * > craneObj;
 
 	{ //read objects to add from "scene.blob":
 		std::ifstream file("scene.blob", std::ios::binary);
@@ -194,35 +210,34 @@ int main(int argc, char **argv) {
 			std::vector< SceneEntry > data;
 			read_chunk(file, "scn0", &data);
 
-			for (auto const &entry : data) {
-				if (!(entry.name_begin <= entry.name_end && entry.name_end <= strings.size())) {
-					throw std::runtime_error("index entry has out-of-range name begin/end");
-				}
-				std::string name(&strings[0] + entry.name_begin, &strings[0] + entry.name_end);
-				add_object(name, entry.position, entry.rotation, entry.scale);
-			}
+
+            add_object("Plane",  glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(1.0f));
+            add_object("Stand",  glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(1.0f));
+            Balloon1 = &add_object("Balloon1.001",  glm::vec3(0.9f, 2.2f, 1.0f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(1.0f));
+            Balloon2 = &add_object("Balloon1.001",  glm::vec3(-0.5f, -2.0f, 1.0f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(0.5f));
+            Balloon3 = &add_object("Balloon1.001",  glm::vec3(-2.5f, 0.0f, 1.0f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(0.5f));
+            craneObj.emplace_back(&add_object("Base",  glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(1.0f)));
+            craneObj.emplace_back(&add_object("Link1",  glm::vec3(0.0f, 0.0f, 0.3f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(1.0f)));
+            craneObj.emplace_back(&add_object("Link2",  glm::vec3(0.0f, 0.0f, 1.2f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(1.0f)));
+            craneObj.emplace_back(&add_object("Link3",  glm::vec3(0.0f, 0.0f, 1.2f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(1.0f)));
 		}
 	}
 
-	//create a weird waving tree stack:
-	std::vector< Scene::Object * > tree_stack;
-	tree_stack.emplace_back( &add_object("Tree", glm::vec3(1.0f, 0.0f, 0.2f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(0.3f)) );
-	tree_stack.emplace_back( &add_object("Tree", glm::vec3(0.0f, 0.0f, 1.7f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(0.9f)) );
-	tree_stack.emplace_back( &add_object("Tree", glm::vec3(0.0f, 0.0f, 1.7f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(0.9f)) );
-	tree_stack.emplace_back( &add_object("Tree", glm::vec3(0.0f, 0.0f, 1.7f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(0.9f)) );
-
-	for (uint32_t i = 1; i < tree_stack.size(); ++i) {
-		tree_stack[i]->transform.set_parent(&tree_stack[i-1]->transform);
+    
+    //Parent Crane Entities
+    for (uint32_t i = 1; i < craneObj.size(); ++i) {
+		craneObj[i]->transform.set_parent(&craneObj[i-1]->transform);
 	}
 
-	std::vector< float > wave_acc(tree_stack.size(), 0.0f);
+
+	std::vector< float > wave_acc(craneObj.size(), 0.0f);
 
 	glm::vec2 mouse = glm::vec2(0.0f, 0.0f); //mouse position in [-1,1]x[-1,1] coordinates
 
 	struct {
-		float radius = 5.0f;
-		float elevation = 0.0f;
-		float azimuth = 0.0f;
+		float radius = 7.5f;
+		float elevation = -3.75834f;
+		float azimuth =-6.13125f;
 		glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
 	} camera;
 
@@ -232,16 +247,85 @@ int main(int argc, char **argv) {
 	while (true) {
 		static SDL_Event evt;
 		while (SDL_PollEvent(&evt) == 1) {
-			//handle input:
-			if (evt.type == SDL_MOUSEMOTION) {
+            if (evt.type == SDL_KEYDOWN) {
+                
+                switch(evt.key.keysym.sym){
+                    case SDLK_z:
+                        isZPressed = true;
+                        break;
+                    case SDLK_x:
+                        isXPressed = true;
+                        break;
+                    case SDLK_a:
+                        isAPressed = true;
+                        break;
+                    case SDLK_s:
+                        isSPressed = true;
+                        break;
+                    case SDLK_SEMICOLON:
+                        isCommaPressed = true;
+                        break;
+                    case SDLK_QUOTE:
+                        isColnPressed = true;
+                        break;
+                    case SDLK_PERIOD:
+                        isPeriodPressed = true;
+                        break;
+                    case SDLK_SLASH:
+                        isSlashPressed = true;
+                        break;
+                    default:
+                        break;
+                }
+                
+            }
+            else if (evt.type == SDL_KEYUP) {
+                switch(evt.key.keysym.sym){
+                    case SDLK_z:
+                        isZPressed = false;
+                        break;
+                    case SDLK_x:
+                        isXPressed = false;
+                        break;
+                    case SDLK_a:
+                        isAPressed = false;
+                        break;
+                    case SDLK_s:
+                        isSPressed = false;
+                        break;
+                    case SDLK_SEMICOLON:
+                        isCommaPressed = false;
+                        break;
+                    case SDLK_QUOTE:
+                        isColnPressed = false;
+                        break;
+                    case SDLK_PERIOD:
+                        isPeriodPressed = false;
+                        break;
+                    case SDLK_SLASH:
+                        isSlashPressed = false;
+                        break;
+                    default:
+                        break;
+                }
+                
+            }
+			else if (evt.type == SDL_MOUSEMOTION) {
 				glm::vec2 old_mouse = mouse;
 				mouse.x = (evt.motion.x + 0.5f) / float(config.size.x) * 2.0f - 1.0f;
 				mouse.y = (evt.motion.y + 0.5f) / float(config.size.y) *-2.0f + 1.0f;
 				if (evt.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
 					camera.elevation += -2.0f * (mouse.y - old_mouse.y);
 					camera.azimuth += -2.0f * (mouse.x - old_mouse.x);
+                    
 				}
-			} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
+			}
+            else if (evt.type == SDL_MOUSEBUTTONUP) {
+                
+                std::cout << camera.elevation << " " << camera.azimuth;
+                
+            }
+            else if (evt.type == SDL_MOUSEBUTTONDOWN) {
 			} else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_ESCAPE) {
 				should_quit = true;
 			} else if (evt.type == SDL_QUIT) {
@@ -253,22 +337,91 @@ int main(int argc, char **argv) {
 
 		auto current_time = std::chrono::high_resolution_clock::now();
 		static auto previous_time = current_time;
-		float elapsed = std::chrono::duration< float >(current_time - previous_time).count();
+//		float elapsed = std::chrono::duration< float >(current_time - previous_time).count();
 		previous_time = current_time;
+        
+        float speed = 0.01f;
 
 		{ //update game state:
-			//tree stack:
-			for (uint32_t i = 0; i < tree_stack.size(); ++i) {
-				wave_acc[i] += elapsed * (0.3f + 0.3f * i);
-				wave_acc[i] -= std::floor(wave_acc[i]);
-				float ang = (0.7f * float(M_PI)) * i;
-				tree_stack[i]->transform.rotation = glm::angleAxis(
-					std::cos(wave_acc[i] * 2.0f * float(M_PI)) * (0.2f + 0.1f * i),
-					glm::vec3(std::cos(ang), std::sin(ang), 0.0f)
-				);
-			}
+            static float axes1 = 0.0f;
+            static float axes2 = 0.0f;
+            static float axes3 = 0.0f;
+            static float axes4 = 0.0f;
+            
+            if(isZPressed)
+                axes1+=speed;
+            if(isXPressed)
+                axes1-=speed;
+            if(isAPressed){
+                if(axes2>-0.29f)
+                    axes2-=speed;
+            }
+            if(isSPressed){
+                if(axes2<0.29f)
+                    axes2+=speed;
+            }
+            if(isCommaPressed){
+                if(axes3>-0.39f)
+                    axes3-=speed;
+            }
+            if(isColnPressed){
+                if(axes3<0.39f)
+                    axes3+=speed;
+            }
+            if(isPeriodPressed){
+                if(axes4>-0.39f)
+                    axes4-=speed;
+            }
+            if(isSlashPressed){
+                if(axes4<0.39f)
+                    axes4+=speed;
+            }
+            
+            
+            
+			
+            craneObj[0]->transform.rotation = glm::angleAxis(
+                                                             axes1 * 2.0f * float(M_PI) * (0.8f),
+                                                             glm::vec3(0.0f,0.0f,1.0f)
+                                                             );
 
-			//camera:
+            craneObj[1]->transform.rotation = glm::angleAxis(
+                                                             axes2 * 2.0f * float(M_PI) * (0.8f),
+                                                             glm::vec3(1.0f,0.0f,0.0f)
+                                                             );
+
+            craneObj[2]->transform.rotation = glm::angleAxis(
+                                                             axes3 * 2.0f * float(M_PI) * (0.8f),
+                                                             glm::vec3(1.0f,0.0f,0.0f)
+                                                             );
+            
+            craneObj[3]->transform.rotation = glm::angleAxis(
+                                                             axes4 * 2.0f * float(M_PI) * (0.8f),
+                                                             glm::vec3(1.0f,0.0f,0.0f)
+                                                             );
+            
+            
+            static float ctr = 0.0f;
+            ctr+=speed;
+            //Balloon Up Down
+            Balloon1->transform.position.z +=  0.03f *std::sin(ctr*2);
+            Balloon2->transform.position.z +=  0.04f *std::sin(ctr*3);
+            Balloon3->transform.position.z +=  0.07f *std::sin(ctr*5);
+            
+            glm::mat4 tr = craneObj[3]->transform.make_world_to_local();
+            
+            glm::vec3 localPostion;
+            localPostion.x =tr[3][0];
+            localPostion.y =tr[3][1];
+            localPostion.z =tr[3][2];
+            
+          
+//            std::cout<<localPostion.x << " " << localPostion.y << " " << localPostion.z << "\n";
+//            
+            std::cout<< glm::distance(Balloon1->transform.position,localPostion) << "\n";
+            
+            
+            //camera:
 			scene.camera.transform.position = camera.radius * glm::vec3(
 				std::cos(camera.elevation) * std::cos(camera.azimuth),
 				std::cos(camera.elevation) * std::sin(camera.azimuth),

@@ -12,15 +12,19 @@ import sys
 import bpy
 import struct
 
-bpy.ops.wm.open_mainfile(filepath='island.blend')
+bpy.ops.wm.open_mainfile(filepath='robot.blend')
 
 #names of objects whose meshes to write (not actually the names of the meshes):
 to_write = [
-	'House',
-	'Land',
-	'Tree',
-	'Water',
-	'Rock',
+	'Plane',
+	'Stand',
+	'Base',
+	'Link1',
+	'Link2',
+	'Link3',
+	'Balloon1.001',
+	'Balloon2.001',
+	'Balloon3.001'
 ]
 
 #data contains vertex and normal data from the meshes:
@@ -105,7 +109,7 @@ print("Wrote " + str(blob.tell()) + " bytes to meshes.blob")
 #Export scene (object positions for every object on layer one)
 
 #(re-open file because we adjusted mesh users in the export above)
-bpy.ops.wm.open_mainfile(filepath='island.blend')
+bpy.ops.wm.open_mainfile(filepath='robot.blend')
 
 #strings chunk will have names
 strings = b''
